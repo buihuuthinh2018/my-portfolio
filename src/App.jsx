@@ -42,7 +42,7 @@ function App() {
           className="flex-1 space-y-6 text-center md:text-left"
           initial="hidden" animate="visible" variants={fadeIn}
         >
-          <h2 className="text-primary font-medium tracking-wider text-sm uppercase">Software Engineer (Junior)</h2>
+          <h2 className="text-primary font-medium tracking-wider text-sm uppercase">Software Engineer (Middle)</h2>
           <h1 className="text-5xl md:text-7xl font-bold text-slate-100">
             Hi, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Bùi Hữu Thịnh</span>
           </h1>
@@ -68,7 +68,7 @@ function App() {
           <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full p-2 bg-gradient-to-tr from-primary to-purple-500">
             <div className="w-full h-full rounded-full bg-card flex items-center justify-center overflow-hidden border-4 border-darker relative group">
               <img 
-                src="/avatar.png" 
+                src={`${import.meta.env.BASE_URL}avatar.png`} 
                 alt="Bùi Hữu Thịnh" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 onError={(e) => {
@@ -114,7 +114,7 @@ function App() {
                 </div>
                 <div className="flex items-center gap-4 text-slate-400">
                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-primary"><Phone size={18} /></div>
-                  <div><p className="text-xs text-slate-500 uppercase">Phone</p><p className="font-medium text-slate-300">0768 801 289</p></div>
+                  <div><p className="text-xs text-slate-500 uppercase">Phone</p><p className="font-medium text-slate-300">+84328338985</p></div>
                 </div>
                 <div className="flex items-center gap-4 text-slate-400">
                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-primary"><Mail size={18} /></div>
@@ -150,13 +150,19 @@ function App() {
           <motion.div variants={fadeIn} className="bg-card border border-slate-800 rounded-xl p-6 hover:border-primary/50 transition-colors group">
             <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-blue-400 mb-4 group-hover:scale-110 transition-transform"><Briefcase size={24} /></div>
             <h3 className="text-lg font-semibold text-slate-200 mb-2">Tools & Methodology</h3>
-            <p className="text-slate-400 text-sm">Proficient with Version Control (Github), Jira, and Agile Scrum methodology.</p>
+            <p className="text-slate-400 text-sm">Proficient with Version Control (Github, Gitlab), Jira, Jenkins, Argo, and Agile Scrum methodology.</p>
           </motion.div>
           
           <motion.div variants={fadeIn} className="bg-card border border-slate-800 rounded-xl p-6 hover:border-primary/50 transition-colors group">
             <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform"><User size={24} /></div>
             <h3 className="text-lg font-semibold text-slate-200 mb-2">Soft Skills</h3>
             <p className="text-slate-400 text-sm">Excellent teamwork, ability to work with AI Agents, and good English comprehension (Read & Write).</p>
+          </motion.div>
+
+          <motion.div variants={fadeIn} className="bg-card border border-slate-800 rounded-xl p-6 hover:border-primary/50 transition-colors group">
+            <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-110 transition-transform"><Code size={24} /></div>
+            <h3 className="text-lg font-semibold text-slate-200 mb-2">Other Relative Skills</h3>
+            <p className="text-slate-400 text-sm">Python (Crawler, Vision, Data), NodeJS, MongoDB, Firebase Realtime/Store, Google Cloud, Mobile Android App Publish, MySQL, PostgreSQL, OAuth platform, Facebook Graph, and Responsive/PWA App.</p>
           </motion.div>
         </motion.div>
       </section>
