@@ -174,9 +174,9 @@ function App() {
         </motion.div>
 
         <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-800 before:to-transparent">
-          
-          {/* PKTEAM */}
-          <motion.div 
+
+          {/* GALAXY TECHNOLOGY SERVICES */}
+          <motion.div
             className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
             initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeIn}
           >
@@ -185,8 +185,32 @@ function App() {
             </div>
             <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl bg-card border border-slate-800 shadow-xl hover:border-primary/30 transition-colors">
               <div className="flex justify-between items-start mb-2 flex-col sm:flex-row sm:items-center">
+                <h3 className="font-bold text-slate-200 text-xl">GALAXY TECHNOLOGY SERVICES</h3>
+                <span className="text-primary font-medium text-sm bg-primary/10 px-3 py-1 rounded-full mt-2 sm:mt-0">07/2026 - PRESENT</span>
+              </div>
+              <h4 className="text-slate-400 font-medium mb-4">Full-stack Developer</h4>
+              <ul className="space-y-2 text-sm text-slate-400 list-disc list-outside ml-4">
+                <li>Develop product interfaces with ReactJS</li>
+                <li>Use AI tools to improve product development efficiency</li>
+                <li>Build a data crawling system to aggregate and manage partner product data</li>
+                <li>Integrate AI vision tools and models such as GPT, Gemini, and Gemma 4 to analyze and evaluate data</li>
+                <li>Manage large-scale, complex workflows and datasets</li>
+              </ul>
+            </div>
+          </motion.div>
+          
+          {/* PKTEAM */}
+          <motion.div 
+            className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group"
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeIn}
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-full border border-slate-700 bg-card text-primary shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow">
+              <Briefcase size={16} />
+            </div>
+            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-2xl bg-card border border-slate-800 shadow-xl hover:border-primary/30 transition-colors">
+              <div className="flex justify-between items-start mb-2 flex-col sm:flex-row sm:items-center">
                 <h3 className="font-bold text-slate-200 text-xl">PKTEAM</h3>
-                <span className="text-primary font-medium text-sm bg-primary/10 px-3 py-1 rounded-full mt-2 sm:mt-0">11/2025 - TODAY</span>
+                <span className="text-primary font-medium text-sm bg-primary/10 px-3 py-1 rounded-full mt-2 sm:mt-0">09/2025 - 06/2026</span>
               </div>
               <h4 className="text-slate-400 font-medium mb-4">Frontend Developer</h4>
               <ul className="space-y-2 text-sm text-slate-400 list-disc list-outside ml-4">
