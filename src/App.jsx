@@ -1,6 +1,8 @@
+import { lazy, Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowDown,
+  Box,
   Briefcase,
   Calendar,
   Code,
@@ -11,6 +13,8 @@ import {
   Sparkles,
   User,
 } from 'lucide-react';
+
+const Book3DView = lazy(() => import('./Book3DView'));
 
 const skills = [
   {
@@ -139,6 +143,16 @@ function SectionHeading({ icon: Icon, children }) {
 }
 
 function App() {
+  const [is3D, setIs3D] = useState(false);
+
+  if (is3D) {
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#040711] text-sm uppercase tracking-[0.22em] text-cyan-300">Opening the 3D book...</div>}>
+        <Book3DView onExit={() => setIs3D(false)} skills={skills} experiences={experiences} />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#06080f] text-slate-200 selection:bg-cyan-300 selection:text-slate-950">
       <div className="pointer-events-none fixed inset-0 z-0">
@@ -166,9 +180,14 @@ function App() {
               </a>
             ))}
           </div>
-          <a href="#contact" className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-cyan-300/40 hover:bg-cyan-300/10">
-            Contact Me
-          </a>
+          <div className="flex items-center gap-2">
+            <a href="#contact" className="hidden rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-cyan-300/40 hover:bg-cyan-300/10 sm:block">
+              Contact Me
+            </a>
+            <button type="button" onClick={() => setIs3D(true)} className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-violet-400 px-4 py-2 text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(103,232,249,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_0_32px_rgba(103,232,249,0.3)]">
+              <Box size={16} className="transition-transform duration-500 group-hover:rotate-12" /> 3D
+            </button>
+          </div>
         </div>
       </nav>
 
