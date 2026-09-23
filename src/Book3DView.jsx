@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, GraduationCap, Mail, MapPin, Phone, X } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, GraduationCap, Mail, MapPin, Phone, RotateCcw, X } from 'lucide-react';
 import ThreeBookScene from './ThreeBookScene';
 import PhysicalBook from './PhysicalBook';
 import './book-reader.css';
@@ -20,6 +20,20 @@ const chapters = [
   { title: 'Education' },
 ];
 const number = (index) => String(index + 1).padStart(2, '0');
+const LAST_CHAPTER = chapters.length - 1;
+const BACK_COVER = chapters.length;
+const chapterLabel = (index) => index < 0 ? 'Front cover' : index > LAST_CHAPTER ? 'Back cover' : chapters[index].title;
+const pageLabel = (index) => index < 0 ? 'BÌA TRƯỚC' : index > LAST_CHAPTER ? 'BÌA SAU' : `${number(index)} / ${number(LAST_CHAPTER)}`;
+
+function BookCover({ back = false }) {
+  return <div className={`book-cover-content${back ? ' is-back' : ''}`}>
+    <span className="book-cover-overline">PORTFOLIO · 2026</span>
+    <span className="book-cover-rule" />
+    {back ? <><span className="book-cover-subtitle">THE BOOK OF THINH</span><strong>9/2026</strong><span className="book-cover-subtitle">BÙI HỮU THỊNH</span></> : <><span className="book-cover-subtitle">THE BOOK OF THINH</span><strong>Bùi Hữu Thịnh</strong><span className="book-cover-subtitle">SOFTWARE ENGINEER · MIDDLE</span></>}
+    <span className="book-cover-rule" />
+    <span className="book-cover-foot">{back ? 'THE END · KEEP EXPLORING' : 'OPEN THE BOOK TO EXPLORE'}</span>
+  </div>;
+}
 
 function Detail({ icon: Icon, label, value }) {
   return <div className="leaf-detail"><Icon size={19} /><div><small>{label}</small><strong>{value}</strong></div></div>;
@@ -133,8 +147,11 @@ function Leaf({ chapter, side, skills, experiences, onSelectExperience, interact
 }
 
 function Book3DView({ onExit, skills, experiences }) {
-  const [chapter, setChapter] = useState(0);
+  const [chapter, setChapter] = useState(-1);
   const [flip, setFlip] = useState(null);
+  const [turnPending, setTurnPending] = useState(false);
+  const [pageInput, setPageInput] = useState('');
+  const [pageError, setPageError] = useState('');
   const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 721px)').matches);
   const [physicalReady, setPhysicalReady] = useState(false);
   const flipLock = useRef(false);
@@ -156,7 +173,7 @@ function Book3DView({ onExit, skills, experiences }) {
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 721px)');
-    const update = () => setDesktop(media.matches);
+    const update = () => { setDesktop(media.matches); setPhysicalReady(false); };
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
@@ -172,25 +189,28 @@ function Book3DView({ onExit, skills, experiences }) {
     }
   }, [chapter]);
 
-  const turnTo = useCallback(async (next) => {
-    if (flipLock.current || next === chapter || next < 0 || next >= chapters.length) return;
+  const turnTo = useCallback(async (next, startProgress = 0, cornerY = -1) => {
+    if (flipLock.current || next === chapter || next < -1 || next > BACK_COVER) return;
     const direction = next > chapter ? 1 : -1;
     flipLock.current = true;
-    if (desktop && bookApiRef.current) {
+    setTurnPending(true);
+    if (desktop && bookApiRef.current && next >= 0 && next <= LAST_CHAPTER) {
       try { await bookApiRef.current.prepare(next); }
       catch { /* Keep the CSS book available if a texture cannot be prepared. */ }
     }
-    setFlip({ from: chapter, to: next, direction });
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = reduced ? 70 : Math.max(160, Math.round(800 * (1 - startProgress)));
+    setFlip({ from: chapter, to: next, direction, startProgress, duration, cornerY });
     timers.current.push(window.setTimeout(() => {
       setChapter(next);
-    }, reduced ? 30 : 340));
-    timers.current.push(window.setTimeout(() => { setFlip(null); flipLock.current = false; }, reduced ? 70 : 700));
+    }, reduced ? 30 : duration - 35));
+    timers.current.push(window.setTimeout(() => { setFlip(null); flipLock.current = false; setTurnPending(false); }, reduced ? 70 : duration));
   }, [chapter, desktop]);
-  const turn = useCallback((direction) => turnTo(chapter + direction), [chapter, turnTo]);
+  const turn = useCallback((direction, startProgress = 0, cornerY = -1) => turnTo(chapter + direction, startProgress, cornerY), [chapter, turnTo]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (event.key === 'Escape') onExit();
       if (event.key === 'ArrowRight') turn(1);
       if (event.key === 'ArrowLeft') turn(-1);
@@ -199,12 +219,27 @@ function Book3DView({ onExit, skills, experiences }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onExit, turn]);
 
+  const jumpToPage = (event) => {
+    event.preventDefault();
+    const value = pageInput.trim();
+    const pageNumber = Number(value);
+    if (!/^\d+$/.test(value) || pageNumber < 1 || pageNumber > chapters.length) {
+      setPageError(`Nhập số trang từ 1 đến ${chapters.length}.`);
+      return;
+    }
+    setPageError('');
+    setPageInput('');
+    turnTo(pageNumber - 1);
+  };
+
   const handlePointerDown = (event) => {
+    if (desktop) return;
     if (event.target.closest('button')) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     pointerStart.current = { x: event.clientX, eligible: event.pointerType !== 'mouse' || event.clientX < bounds.left + 110 || event.clientX > bounds.right - 110 };
   };
   const handlePointerUp = (event) => {
+    if (desktop) return;
     if (!pointerStart.current) return;
     const { x, eligible } = pointerStart.current;
     pointerStart.current = null;
@@ -216,34 +251,47 @@ function Book3DView({ onExit, skills, experiences }) {
     <ThreeBookScene page={chapter} />
     <div className="book-world-shade" aria-hidden="true" />
     <header className="book-world-header"><span className="book-monogram">BT.</span><div><span>Portfolio / CV</span><strong>Bùi Hữu Thịnh</strong></div></header>
+    <form className="book-page-jump" onSubmit={jumpToPage} noValidate aria-label="Đi tới trang cụ thể">
+      <label htmlFor="book-page-number">Trang</label>
+      <input id="book-page-number" type="text" inputMode="numeric" autoComplete="off" placeholder={`1–${chapters.length}`} value={pageInput} onChange={(event) => { setPageInput(event.target.value); if (pageError) setPageError(''); }} aria-invalid={Boolean(pageError)} aria-describedby={pageError ? 'book-page-error' : undefined} disabled={turnPending} />
+      <button type="submit" disabled={turnPending} aria-label="Đi tới trang đã nhập">Đi</button>
+      {pageError && <span id="book-page-error" className="book-page-error" role="alert">{pageError}</span>}
+    </form>
     <main className="book-reader" aria-label="3D portfolio book">
       <div className={`book-shell${desktop && physicalReady ? ' is-physical' : ''}`} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
-        {desktop && <PhysicalBook page={chapter} flip={flip} sourcesRef={sourcesRef} apiRef={bookApiRef} onReady={() => setPhysicalReady(true)} onSelectExperience={(index) => turnTo(3 + index)} onTurn={turn} />}
-        <div className="book-spread" ref={spreadRef}>
+        {desktop && <PhysicalBook page={chapter} flip={flip} sourcesRef={sourcesRef} apiRef={bookApiRef} onReady={() => setPhysicalReady(true)} onSelectExperience={(index) => turnTo(3 + index)} onTurn={turn} lastChapter={LAST_CHAPTER} />}
+        <div className={`book-spread${chapter < 0 || chapter > LAST_CHAPTER ? ' is-cover' : ''}`} ref={spreadRef}>
+          {chapter < 0 || chapter > LAST_CHAPTER ? <BookCover back={chapter > LAST_CHAPTER} /> : <>
           <section className="book-page book-page-left"><Leaf chapter={chapter} side="left" {...leafProps} /></section>
           <section className="book-page book-page-right"><Leaf chapter={chapter} side="right" {...leafProps} /></section>
           <div className="book-spine" aria-hidden="true" />
-          {flip && <div className={`turning-leaf ${flip.direction === 1 ? 'turning-next' : 'turning-previous'}`} aria-hidden="true">
+          {flip && flip.from >= 0 && flip.from <= LAST_CHAPTER && flip.to >= 0 && flip.to <= LAST_CHAPTER && <div className={`turning-leaf ${flip.direction === 1 ? 'turning-next' : 'turning-previous'}`} aria-hidden="true">
             <div className="turning-face turning-front"><Leaf chapter={flip.from} side={flip.direction === 1 ? 'right' : 'left'} {...leafProps} interactive={false} /></div>
             <div className="turning-face turning-back"><Leaf chapter={flip.to} side={flip.direction === 1 ? 'left' : 'right'} {...leafProps} interactive={false} /></div>
           </div>}
+          </>}
           <div className={`book-mobile-page${chapter >= 3 && chapter <= 7 ? ' is-experience' : ''}`} aria-live="polite">
-            <div className="mobile-chapter-header"><span>THE BOOK OF THINH · {number(chapter)} / {number(chapters.length - 1)}</span><strong>{chapter >= 3 && chapter <= 7 ? 'Professional Experience' : chapters[chapter].title}</strong></div>
-            {chapter >= 3 && chapter <= 7 && <nav className="mobile-experience-strip" aria-label="Choose company">{experiences.map((experience, index) => <button key={`${experience.company}-${experience.period}`} type="button" aria-pressed={chapter === index + 3} disabled={Boolean(flip)} onClick={() => turnTo(index + 3)}>{chapters[index + 3].title.replace('Experience · ', '')}</button>)}</nav>}
+            {chapter < 0 || chapter > LAST_CHAPTER ? <BookCover back={chapter > LAST_CHAPTER} /> : <>
+            <div className="mobile-chapter-header"><span>THE BOOK OF THINH · {pageLabel(chapter)}</span><strong>{chapter >= 3 && chapter <= 7 ? 'Professional Experience' : chapters[chapter].title}</strong></div>
+            {chapter >= 3 && chapter <= 7 && <nav className="mobile-experience-strip" aria-label="Choose company">{experiences.map((experience, index) => <button key={`${experience.company}-${experience.period}`} type="button" aria-pressed={chapter === index + 3} disabled={turnPending} onClick={() => turnTo(index + 3)}>{chapters[index + 3].title.replace('Experience · ', '')}</button>)}</nav>}
             <Leaf chapter={chapter} side="left" {...leafProps} /><Leaf chapter={chapter} side="right" {...leafProps} />
+            </>}
           </div>
         </div>
       </div>
       <nav className="book-navigation" aria-label="Book pages">
-        <button className="book-corner book-corner-left" type="button" onClick={() => turn(-1)} disabled={chapter === 0 || Boolean(flip)} aria-label="Previous page" title="Turn to previous chapter"><ChevronLeft size={20} /><span>Previous</span></button>
-        <span aria-live="polite">{number(chapter)} / {number(chapters.length - 1)} <i>—</i> <span className="nav-chapter-label">{chapters[chapter].title}</span></span>
-        <button className="book-corner book-corner-right" type="button" onClick={() => turn(1)} disabled={chapter === chapters.length - 1 || Boolean(flip)} aria-label="Next page" title="Turn to next chapter"><span>Next</span><ChevronRight size={20} /></button>
+        <button className="book-corner book-corner-left" type="button" onClick={() => turn(-1)} disabled={chapter === -1 || turnPending} aria-label="Previous page" title="Turn to previous page"><ChevronLeft size={20} /><span>Previous</span></button>
+        <span aria-live="polite">{pageLabel(chapter)} <i>—</i> <span className="nav-chapter-label">{chapterLabel(chapter)}</span></span>
+        {chapter === BACK_COVER ? <button className="book-corner book-corner-right book-restart" type="button" onClick={() => turnTo(0)} disabled={turnPending} aria-label="Về trang đầu" title="Quay về trang đầu"><RotateCcw size={18} /><span>Về trang 1</span></button> : <button className="book-corner book-corner-right" type="button" onClick={() => turn(1)} disabled={turnPending} aria-label="Next page" title="Turn to next page"><span>Next</span><ChevronRight size={20} /></button>}
+        <span className="book-turn-tip" aria-hidden="true">{chapter < 0 || chapter > LAST_CHAPTER ? 'Kéo góc bìa để mở sách' : 'Kéo góc trang để lật'}</span>
       </nav>
     </main>
     <button type="button" className="book-exit-button" onClick={onExit}><X size={18} /> Back to 2D</button>
     {desktop && physicalReady && <div className="book-accessible-content" aria-live="polite">
+      {chapter < 0 || chapter > LAST_CHAPTER ? <BookCover back={chapter > LAST_CHAPTER} /> : <>
       <ChapterContent chapter={chapter} side="left" skills={skills} experiences={experiences} onSelectExperience={() => {}} interactive={false} />
       <ChapterContent chapter={chapter} side="right" skills={skills} experiences={experiences} onSelectExperience={() => {}} interactive={false} />
+      </>}
     </div>}
     {desktop && <div ref={sourcesRef} className="book-texture-sources" aria-hidden="true" inert>
       {chapters.map((entry, index) => ['left', 'right'].map((side) => <div className={`book-texture-page book-page book-page-${side}`} data-page={index} data-side={side} key={`${entry.title}-${side}`}><Leaf chapter={index} side={side} skills={skills} experiences={experiences} onSelectExperience={() => {}} interactive={false} /></div>))}
