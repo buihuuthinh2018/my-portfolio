@@ -1,256 +1,254 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  BookOpen,
-  Briefcase,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Code,
-  GraduationCap,
-  Mail,
-  MapPin,
-  Phone,
-  Sparkles,
-  User,
-  X,
-} from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Calendar, ChevronLeft, ChevronRight, GraduationCap, Mail, MapPin, Phone, X } from 'lucide-react';
 import ThreeBookScene from './ThreeBookScene';
+import PhysicalBook from './PhysicalBook';
+import './book-reader.css';
+import './book-reader-details.css';
+import './book-mobile.css';
+import './physical-book.css';
 
-const pageLabels = ['Welcome', 'About', 'Skills', 'Experience', 'Personal Develop', 'Education'];
+const chapters = [
+  { title: 'Welcome' },
+  { title: 'About Me' },
+  { title: 'Skills & Expertise' },
+  { title: 'Experience · Galaxy' },
+  { title: 'Experience · PKTEAM' },
+  { title: 'Experience · DXC Angular' },
+  { title: 'Experience · Freelancer' },
+  { title: 'Experience · DXC Java' },
+  { title: 'Personal Develop' },
+  { title: 'Education' },
+];
+const number = (index) => String(index + 1).padStart(2, '0');
 
-
-function DetailItem({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-cyan-300/10 bg-cyan-300/[0.04] p-3">
-      <Icon size={16} className="shrink-0 text-cyan-300" />
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-200/45">{label}</p>
-        <p className="mt-0.5 break-words text-sm text-cyan-50/85">{value}</p>
-      </div>
-    </div>
-  );
+function Detail({ icon: Icon, label, value }) {
+  return <div className="leaf-detail"><Icon size={19} /><div><small>{label}</small><strong>{value}</strong></div></div>;
 }
 
-function ExperienceReader({ experiences }) {
-  const [selected, setSelected] = useState(0);
-  const { company, period, role, teamSize, details } = experiences[selected];
-  return (
-    <div>
-      <h2 className="hologram-title"><Briefcase size={22} /> Professional Experience</h2>
-      <div className="experience-reader">
-        <nav className="experience-selector" aria-label="Select experience">
-          {experiences.map((experience, index) => (
-            <button type="button" key={`${experience.company}-${experience.period}`} aria-pressed={selected === index} onClick={() => setSelected(index)}>
-              <strong>{experience.company}</strong>
-              <span>{experience.role}</span>
-              <span>{experience.period}</span>
-            </button>
-          ))}
-        </nav>
-        <article className="experience-detail" aria-live="polite">
-          <h3>{company}</h3>
-          <div className="experience-meta"><strong>{role}</strong><span>Team size: {teamSize}</span><span>{period}</span></div>
-          <ul>{details.map(detail => <li key={detail}>{detail}</li>)}</ul>
-        </article>
-      </div>
-    </div>
-  );
+function SkillCard({ skill }) {
+  const Icon = skill.icon;
+  return <article className="leaf-skill"><Icon size={21} /><h3>{skill.title}</h3><p>{skill.description}</p></article>;
 }
 
-function HologramPage({ page, skills, experiences }) {
-  if (page === 0) {
-    return (
-      <div className="flex min-h-full flex-col justify-center text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Software Engineer (Middle)</p>
-        <h1 className="mt-5 text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl">Hi, I&apos;m <span className="block text-cyan-300">Bùi Hữu Thịnh</span></h1>
-        <p className="mx-auto mt-5 max-w-2xl leading-7 text-cyan-50/65">Currently, I specialize in React, Angular and related ecosystems. I love building responsive, performant, and aesthetic web applications.</p>
-      </div>
-    );
-  }
+function experienceTabLabel({ company, role }) {
+  if (company === 'GALAXY TECHNOLOGY SERVICES') return 'Galaxy Technology Services';
+  if (company === 'DXC TECHNOLOGY VIETNAM') return role.includes('Java') ? 'DXC · Java' : 'DXC · Angular';
+  return company;
+}
 
-  if (page === 1) {
-    return (
-      <div>
-        <h2 className="hologram-title"><User size={22} /> About Me</h2>
-        <div className="mt-5 grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4 leading-7 text-cyan-50/70">
-            <p>I&apos;m a passionate Frontend Developer with a strong foundation in modern web technologies. My journey in software engineering has been driven by a desire to create seamless user experiences and robust web applications.</p>
-            <p>With a background in Computer Engineering, I approach problems with both an engineering mindset and a focus on design and usability.</p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <DetailItem icon={Calendar} label="Birth Date" value="25/08/2000 (Male)" />
-            <DetailItem icon={Phone} label="Phone" value="+84328338985" />
-            <DetailItem icon={Mail} label="Email" value="buihuuthinh2018@gmail.com" />
-            <DetailItem icon={MapPin} label="Location" value="Ho Chi Minh City" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (page === 2) {
-    return (
-      <div>
-        <h2 className="hologram-title"><Code size={22} /> Skills & Expertise</h2>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {skills.map(({ title, description, icon: Icon }) => (
-            <div key={title} className="rounded-xl border border-cyan-300/10 bg-cyan-300/[0.035] p-4">
-              <div className="flex items-center gap-3 text-cyan-200"><Icon size={17} /><h3 className="font-semibold">{title}</h3></div>
-              <p className="mt-2 text-sm leading-6 text-cyan-50/60">{description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (page === 3) {
-    return <ExperienceReader experiences={experiences} />;
-  }
-
-  if (page === 4) {
-    return (
-      <div>
-        <h2 className="hologram-title"><Sparkles size={22} /> Personal Develop</h2>
-        <div className="project-reader">
-          <div className="project-copy">
-            <div className="project-badges flex flex-wrap gap-2 font-semibold">
-              <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-amber-200">Final Testing — Coming Soon on Google Play</span>
-              <span className="rounded-full border border-cyan-300/15 bg-cyan-300/[0.06] px-3 py-1.5 text-cyan-100/70">Full-stack · Team size: 1</span>
-            </div>
-            <h3 className="project-name font-semibold tracking-tight text-white">Tarot Together</h3>
-            <p className="project-summary">A full-stack Flutter Android experience for daily Tarot reflection, combining a complete 78-card library with personalized AI readings, journaling, discovery progress, and a mindful social community.</p>
-            <ul className="project-highlights">
-              <li>Daily card draws, animated 3D flips, and upright or reversed meanings for all 78 Tarot cards</li>
-              <li>Gemini-powered interpretations, reading history, personal journal, and achievement tracking</li>
-              <li>Firebase authentication, Firestore synchronization, push notifications, and realtime social features</li>
-              <li>Cloud Run and Node.js API, rewarded ads, in-app purchases, and Vietnamese/English localization</li>
-            </ul>
-          </div>
-          <img src={`${import.meta.env.BASE_URL}tarot-together-icon.png`} alt="Tarot Together" className="mx-auto aspect-square w-32 rounded-2xl border border-amber-300/25 shadow-lg shadow-violet-950/60" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <h2 className="hologram-title"><GraduationCap size={22} /> Education</h2>
-      <div className="mt-7 rounded-2xl border border-cyan-300/10 bg-cyan-300/[0.035] p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h3 className="max-w-2xl text-2xl font-semibold text-white">Ho Chi Minh City University of Technology and Education</h3>
-          <span className="rounded-full border border-cyan-300/15 px-3 py-1.5 text-xs text-cyan-300">8/2018 - 8/2022</span>
-        </div>
-        <h4 className="mt-3 font-medium text-cyan-200/80">Major: Computer Engineering</h4>
-        <p className="mt-5 leading-7 text-cyan-50/60">I have learned about basic programming, networking, electronic circuits, microchips, IoT, and AI. Beside that, I also learned about how to work in teams, analyze problems, and develop solutions.</p>
-      </div>
+function Overview({ side, experiences }) {
+  if (side === 'left') return <div className="editorial-overview">
+    <div className="editorial-profile">
+      <img src={`${import.meta.env.BASE_URL}avatar.png`} alt="Bùi Hữu Thịnh" />
+      <div><span className="editorial-kicker">Hello, I&apos;m</span><h1>Bùi Hữu Thịnh</h1><strong>Software Engineer (Middle)</strong><p>Building responsive, performant, and aesthetic web applications.</p></div>
     </div>
-  );
+    <section className="editorial-section"><h2><span>01</span> About Me</h2><p>I&apos;m a passionate Frontend Developer with a strong foundation in modern web technologies. With a background in Computer Engineering, I approach problems with both an engineering mindset and a focus on design and usability.</p></section>
+    <section className="editorial-section"><h2><span>02</span> Skills &amp; Expertise</h2>
+      <div className="editorial-skill"><span>Frontend</span><b>React · NextJS · Angular</b></div>
+      <div className="editorial-skill"><span>Development</span><b>HTML · CSS · JavaScript</b></div>
+      <div className="editorial-skill"><span>Data &amp; AI</span><b>Python · Vision · Crawler</b></div>
+      <div className="editorial-skill"><span>Mobile &amp; Cloud</span><b>Android · Firebase · Google Cloud</b></div>
+      <div className="editorial-tags"><span>GitHub</span><span>GitLab</span><span>Jenkins</span><span>Argo</span><span>Jira</span><span>Scrum</span></div>
+    </section>
+    <p className="editorial-quote">“I love building responsive, performant, and aesthetic web applications.”</p>
+  </div>;
+
+  return <div className="editorial-overview editorial-overview-right">
+    <section className="editorial-section"><h2><span>03</span> Work Experience</h2><div className="editorial-timeline">{experiences.map((job) => <div className="editorial-job" key={`${job.company}-${job.period}`}><time>{job.period}</time><strong>{job.role}</strong><span>{job.company} · Team size: {job.teamSize}</span><p>{job.details[0]}</p></div>)}</div></section>
+    <section className="editorial-section"><h2><span>04</span> Education</h2><div className="editorial-education"><strong>Computer Engineering</strong><span>Ho Chi Minh City University of Technology and Education</span><time>08/2018 – 08/2022</time></div></section>
+    <section className="editorial-section editorial-contact"><h2><span>05</span> Contact</h2><div><a href="mailto:buihuuthinh2018@gmail.com">buihuuthinh2018@gmail.com</a><a href="tel:+84328338985">+84328338985</a><span>Ho Chi Minh City</span></div></section>
+  </div>;
+}
+
+function ChapterContent({ chapter, side, skills, experiences, onSelectExperience, interactive = true }) {
+  const selectedExperience = chapter - 3;
+  const job = experiences[selectedExperience];
+  if (chapter === 0) return <Overview side={side} experiences={experiences} />;
+
+  if (chapter === 1) return side === 'left' ? <>
+    <h2>About Me</h2>
+    <p>I&apos;m a passionate Frontend Developer with a strong foundation in modern web technologies. My journey in software engineering has been driven by a desire to create seamless user experiences and robust web applications.</p>
+    <p>With a background in Computer Engineering, I approach problems with both an engineering mindset and a focus on design and usability.</p>
+  </> : <>
+    <h2>Personal Details</h2>
+    <div className="leaf-details">
+      <Detail icon={Calendar} label="Birth Date" value="25/08/2000 (Male)" />
+      <Detail icon={Phone} label="Phone" value="+84328338985" />
+      <Detail icon={Mail} label="Email" value="buihuuthinh2018@gmail.com" />
+      <Detail icon={MapPin} label="Location" value="Ho Chi Minh City" />
+    </div>
+  </>;
+
+  if (chapter === 2) return <>
+    {side === 'left' && <h2>Skills &amp; Expertise</h2>}
+    <div className="leaf-skills">{skills.slice(side === 'left' ? 0 : 2, side === 'left' ? 2 : 4).map(skill => <SkillCard key={skill.title} skill={skill} />)}</div>
+  </>;
+
+  if (chapter >= 3 && chapter <= 7) return side === 'left' ? <>
+    <h2>Professional Experience</h2>
+    <nav className="leaf-jobs" aria-label="Select experience">
+      {experiences.map((experience, index) => <button
+        key={`${experience.company}-${experience.period}`}
+        type="button" disabled={!interactive}
+        aria-pressed={selectedExperience === index}
+        aria-label={`${experience.company}, ${experience.role}, ${experience.period}`}
+        onClick={() => onSelectExperience(index)}
+      ><strong>{experienceTabLabel(experience)}</strong><span>{experience.period}</span></button>)}
+    </nav>
+  </> : <article className="leaf-job-detail" aria-live="polite">
+    <p className="leaf-eyebrow">{job.period}</p>
+    <h2>{job.company}</h2>
+    <div className="leaf-job-meta"><strong>{job.role}</strong><span>Team size: {job.teamSize}</span></div>
+    <ul>{job.details.map(detail => <li key={detail}>{detail}</li>)}</ul>
+  </article>;
+
+  if (chapter === 8) return side === 'left' ? <>
+    <h2>Personal Develop</h2>
+    <div className="leaf-project-heading"><img src={`${import.meta.env.BASE_URL}tarot-together-icon.png`} alt="Tarot Together" /><div><h3>Tarot Together</h3><p>Full-stack · Team size: 1</p></div></div>
+    <p className="leaf-status">Final Testing — Coming Soon on Google Play</p>
+    <p>A full-stack Flutter Android experience for daily Tarot reflection, combining a complete 78-card library with personalized AI readings, journaling, discovery progress, and a mindful social community.</p>
+  </> : <>
+    <h2>Tarot Together</h2>
+    <ul className="leaf-feature-list">
+      <li>Daily card draws, animated 3D flips, and upright or reversed meanings for all 78 Tarot cards</li>
+      <li>Gemini-powered interpretations, reading history, personal journal, and achievement tracking</li>
+      <li>Firebase authentication, Firestore synchronization, push notifications, and realtime social features</li>
+      <li>Cloud Run and Node.js API, rewarded ads, in-app purchases, and Vietnamese/English localization</li>
+    </ul>
+  </>;
+
+  return side === 'left' ? <>
+    <h2>Education</h2>
+    <div className="leaf-education"><GraduationCap size={28} /><h3>Ho Chi Minh City University of Technology and Education</h3><p>8/2018 - 8/2022</p><strong>Major: Computer Engineering</strong></div>
+  </> : <>
+    <h2>Computer Engineering</h2>
+    <p>I have learned about basic programming, networking, electronic circuits, microchips, IoT, and AI. Beside that, I also learned about how to work in teams, analyze problems, and develop solutions.</p>
+  </>;
+}
+
+function Leaf({ chapter, side, skills, experiences, onSelectExperience, interactive = true }) {
+  return <div className={`leaf-content leaf-${side}`}>
+    <ChapterContent chapter={chapter} side={side} skills={skills} experiences={experiences} onSelectExperience={onSelectExperience} interactive={interactive} />
+  </div>;
 }
 
 function Book3DView({ onExit, skills, experiences }) {
-  const [page, setPage] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const totalPages = pageLabels.length;
+  const [chapter, setChapter] = useState(0);
+  const [flip, setFlip] = useState(null);
+  const [desktop, setDesktop] = useState(() => window.matchMedia('(min-width: 721px)').matches);
+  const [physicalReady, setPhysicalReady] = useState(false);
+  const flipLock = useRef(false);
+  const timers = useRef([]);
+  const pointerStart = useRef(null);
+  const spreadRef = useRef(null);
+  const sourcesRef = useRef(null);
+  const bookApiRef = useRef(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const pendingTimers = timers.current;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = previousOverflow;
+      pendingTimers.forEach(clearTimeout);
     };
   }, []);
 
-  const goTo = (nextPage) => {
-    if (nextPage < 0 || nextPage >= totalPages || nextPage === page) return;
-    setDirection(nextPage > page ? 1 : -1);
-    setPage(nextPage);
-  };
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 721px)');
+    const update = () => setDesktop(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    spreadRef.current?.querySelectorAll('.leaf-content, .book-mobile-page').forEach((element) => { element.scrollTop = 0; });
+    const strip = spreadRef.current?.querySelector('.mobile-experience-strip');
+    const active = strip?.querySelector('[aria-pressed="true"]');
+    if (active) {
+      const stripBounds = strip.getBoundingClientRect();
+      const activeBounds = active.getBoundingClientRect();
+      strip.scrollLeft += activeBounds.left - stripBounds.left - (strip.clientWidth - active.clientWidth) / 2;
+    }
+  }, [chapter]);
+
+  const turnTo = useCallback(async (next) => {
+    if (flipLock.current || next === chapter || next < 0 || next >= chapters.length) return;
+    const direction = next > chapter ? 1 : -1;
+    flipLock.current = true;
+    if (desktop && bookApiRef.current) {
+      try { await bookApiRef.current.prepare(next); }
+      catch { /* Keep the CSS book available if a texture cannot be prepared. */ }
+    }
+    setFlip({ from: chapter, to: next, direction });
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    timers.current.push(window.setTimeout(() => {
+      setChapter(next);
+    }, reduced ? 30 : 340));
+    timers.current.push(window.setTimeout(() => { setFlip(null); flipLock.current = false; }, reduced ? 70 : 700));
+  }, [chapter, desktop]);
+  const turn = useCallback((direction) => turnTo(chapter + direction), [chapter, turnTo]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onExit();
-      if (event.key === 'ArrowRight') setPage((current) => {
-        const next = Math.min(totalPages - 1, current + 1);
-        if (next !== current) setDirection(1);
-        return next;
-      });
-      if (event.key === 'ArrowLeft') setPage((current) => {
-        const next = Math.max(0, current - 1);
-        if (next !== current) setDirection(-1);
-        return next;
-      });
+      if (event.key === 'ArrowRight') turn(1);
+      if (event.key === 'ArrowLeft') turn(-1);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onExit, totalPages]);
+  }, [onExit, turn]);
 
-  const pageNumber = useMemo(() => String(page + 1).padStart(2, '0'), [page]);
+  const handlePointerDown = (event) => {
+    if (event.target.closest('button')) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    pointerStart.current = { x: event.clientX, eligible: event.pointerType !== 'mouse' || event.clientX < bounds.left + 110 || event.clientX > bounds.right - 110 };
+  };
+  const handlePointerUp = (event) => {
+    if (!pointerStart.current) return;
+    const { x, eligible } = pointerStart.current;
+    pointerStart.current = null;
+    if (eligible && Math.abs(event.clientX - x) > 70) turn(event.clientX < x ? 1 : -1);
+  };
 
-  return (
-    <div className={`book-3d-view reader-layout ${page === 0 ? 'reader-welcome' : 'reader-chapter'} fixed inset-0 z-[100] overflow-hidden bg-[#040711] text-white`}>
-      <ThreeBookScene page={page} direction={direction} />
-      <div className="book-3d-vignette pointer-events-none absolute inset-0" />
-
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4 sm:p-6">
-        <div className="flex items-center gap-3 rounded-2xl border border-cyan-300/15 bg-[#06101d]/70 px-4 py-3 backdrop-blur-xl">
-          <BookOpen size={20} className="text-cyan-300" />
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-300/55">Virtual portfolio</p>
-            <p className="text-sm font-semibold text-cyan-50">The Book of Thinh</p>
+  const leafProps = { skills, experiences, onSelectExperience: (index) => turnTo(3 + index) };
+  return <div className="book-world">
+    <ThreeBookScene page={chapter} />
+    <div className="book-world-shade" aria-hidden="true" />
+    <header className="book-world-header"><span className="book-monogram">BT.</span><div><span>Portfolio / CV</span><strong>Bùi Hữu Thịnh</strong></div></header>
+    <main className="book-reader" aria-label="3D portfolio book">
+      <div className={`book-shell${desktop && physicalReady ? ' is-physical' : ''}`} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }}>
+        {desktop && <PhysicalBook page={chapter} flip={flip} sourcesRef={sourcesRef} apiRef={bookApiRef} onReady={() => setPhysicalReady(true)} onSelectExperience={(index) => turnTo(3 + index)} onTurn={turn} />}
+        <div className="book-spread" ref={spreadRef}>
+          <section className="book-page book-page-left"><Leaf chapter={chapter} side="left" {...leafProps} /></section>
+          <section className="book-page book-page-right"><Leaf chapter={chapter} side="right" {...leafProps} /></section>
+          <div className="book-spine" aria-hidden="true" />
+          {flip && <div className={`turning-leaf ${flip.direction === 1 ? 'turning-next' : 'turning-previous'}`} aria-hidden="true">
+            <div className="turning-face turning-front"><Leaf chapter={flip.from} side={flip.direction === 1 ? 'right' : 'left'} {...leafProps} interactive={false} /></div>
+            <div className="turning-face turning-back"><Leaf chapter={flip.to} side={flip.direction === 1 ? 'left' : 'right'} {...leafProps} interactive={false} /></div>
+          </div>}
+          <div className={`book-mobile-page${chapter >= 3 && chapter <= 7 ? ' is-experience' : ''}`} aria-live="polite">
+            <div className="mobile-chapter-header"><span>THE BOOK OF THINH · {number(chapter)} / {number(chapters.length - 1)}</span><strong>{chapter >= 3 && chapter <= 7 ? 'Professional Experience' : chapters[chapter].title}</strong></div>
+            {chapter >= 3 && chapter <= 7 && <nav className="mobile-experience-strip" aria-label="Choose company">{experiences.map((experience, index) => <button key={`${experience.company}-${experience.period}`} type="button" aria-pressed={chapter === index + 3} disabled={Boolean(flip)} onClick={() => turnTo(index + 3)}>{chapters[index + 3].title.replace('Experience · ', '')}</button>)}</nav>}
+            <Leaf chapter={chapter} side="left" {...leafProps} /><Leaf chapter={chapter} side="right" {...leafProps} />
           </div>
         </div>
-        <button type="button" aria-label="Back to 2D" onClick={onExit} className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#06101d]/70 px-4 py-3 text-sm text-white/75 backdrop-blur-xl transition hover:border-cyan-300/30 hover:text-cyan-200">
-          <X size={17} /> <span className="hidden sm:inline">Back to 2D</span>
-        </button>
-      </header>
-
-      <aside className="concept-intro">
-        <p className="concept-eyebrow">Software Engineer (Middle)</p>
-        <h1>Hi, I&apos;m<br /><span>Bùi Hữu<br />Thịnh</span></h1>
-        <p className="concept-description">Currently, I specialize in React, Angular and related ecosystems. I love building responsive, performant, and aesthetic web applications.</p>
-        <button type="button" className="concept-start" onClick={() => goTo(Math.min(page + 1, totalPages - 1))} disabled={page === totalPages - 1}>Turn the page <ChevronRight size={18} /></button>
-        <p className="concept-chapter">{pageNumber} <span>/ 06 — {pageLabels[page]}</span></p>
-      </aside>
-      <div className="concept-reading">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.section
-            key={page}
-            custom={direction}
-            initial={{ opacity: 0, y: 24, scale: 0.97, rotateX: direction * 5 }}
-            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            exit={{ opacity: 0, y: -20, scale: 0.98, rotateX: direction * -5 }}
-            transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-            className="book-hologram-panel h-full overflow-y-auto rounded-[1.6rem] border border-cyan-300/20 bg-[#061523]/72 p-5 shadow-[0_0_70px_rgba(34,211,238,0.12)] backdrop-blur-xl sm:p-8"
-          >
-            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-cyan-200/80 to-transparent" />
-            <div className="mb-4 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/45">
-              <span>Holographic record</span>
-              <span>{pageNumber} / {String(totalPages).padStart(2, '0')}</span>
-            </div>
-            <HologramPage page={page} skills={skills} experiences={experiences} />
-          </motion.section>
-        </AnimatePresence>
       </div>
-
-      <div className="absolute inset-x-0 bottom-5 z-20 px-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-[#06101d]/80 p-3 shadow-2xl backdrop-blur-xl">
-          <button type="button" onClick={() => goTo(page - 1)} disabled={page === 0} className="book-control-button" aria-label="Previous page"><ChevronLeft size={20} /></button>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
-            {pageLabels.map((label, index) => (
-              <button key={label} type="button" onClick={() => goTo(index)} className={`group flex items-center gap-2 rounded-xl px-2 py-2 text-xs transition sm:px-3 ${index === page ? 'bg-cyan-300/12 text-cyan-200' : 'text-white/35 hover:text-white/70'}`} aria-label={`Open ${label} page`}>
-                <span className={`h-1.5 rounded-full transition-all ${index === page ? 'w-6 bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.8)]' : 'w-1.5 bg-white/25 group-hover:bg-white/50'}`} />
-                <span className="hidden lg:inline">{label}</span>
-              </button>
-            ))}
-          </div>
-          <button type="button" onClick={() => goTo(page + 1)} disabled={page === totalPages - 1} className="book-control-button" aria-label="Next page"><ChevronRight size={20} /></button>
-        </div>
-        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.2em] text-cyan-100/25">Use arrow keys to turn pages</p>
-      </div>
-    </div>
-  );
+      <nav className="book-navigation" aria-label="Book pages">
+        <button className="book-corner book-corner-left" type="button" onClick={() => turn(-1)} disabled={chapter === 0 || Boolean(flip)} aria-label="Previous page" title="Turn to previous chapter"><ChevronLeft size={20} /><span>Previous</span></button>
+        <span aria-live="polite">{number(chapter)} / {number(chapters.length - 1)} <i>—</i> <span className="nav-chapter-label">{chapters[chapter].title}</span></span>
+        <button className="book-corner book-corner-right" type="button" onClick={() => turn(1)} disabled={chapter === chapters.length - 1 || Boolean(flip)} aria-label="Next page" title="Turn to next chapter"><span>Next</span><ChevronRight size={20} /></button>
+      </nav>
+    </main>
+    <button type="button" className="book-exit-button" onClick={onExit}><X size={18} /> Back to 2D</button>
+    {desktop && physicalReady && <div className="book-accessible-content" aria-live="polite">
+      <ChapterContent chapter={chapter} side="left" skills={skills} experiences={experiences} onSelectExperience={() => {}} interactive={false} />
+      <ChapterContent chapter={chapter} side="right" skills={skills} experiences={experiences} onSelectExperience={() => {}} interactive={false} />
+    </div>}
+    {desktop && <div ref={sourcesRef} className="book-texture-sources" aria-hidden="true" inert>
+      {chapters.map((entry, index) => ['left', 'right'].map((side) => <div className={`book-texture-page book-page book-page-${side}`} data-page={index} data-side={side} key={`${entry.title}-${side}`}><Leaf chapter={index} side={side} skills={skills} experiences={experiences} onSelectExperience={() => {}} interactive={false} /></div>))}
+    </div>}
+  </div>;
 }
 
 export default Book3DView;
