@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, GraduationCap, Mail, MapPin, Phone, RotateCcw, X } from 'lucide-react';
 import ThreeBookScene from './ThreeBookScene';
 import PhysicalBook from './PhysicalBook';
@@ -146,6 +146,22 @@ function Leaf({ chapter, side, skills, experiences, onSelectExperience, interact
   </div>;
 }
 
+function MobilePage({ chapter, skills, experiences, onSelectExperience, interactive = true, scrollTop, live = false }) {
+  const pageRef = useRef(null);
+  useLayoutEffect(() => {
+    if (pageRef.current) pageRef.current.scrollTop = scrollTop ?? 0;
+  }, [chapter, scrollTop]);
+
+  return <div ref={pageRef} className={`book-mobile-page${chapter >= 3 && chapter <= 7 ? ' is-experience' : ''}${chapter < 0 || chapter > LAST_CHAPTER ? ' is-cover-face' : ''}`} aria-live={live ? 'polite' : undefined}>
+    {chapter < 0 || chapter > LAST_CHAPTER ? <BookCover back={chapter > LAST_CHAPTER} /> : <>
+      <div className="mobile-chapter-header"><span>THE BOOK OF THINH · {pageLabel(chapter)}</span><strong>{chapter >= 3 && chapter <= 7 ? 'Professional Experience' : chapters[chapter].title}</strong></div>
+      {chapter >= 3 && chapter <= 7 && <nav className="mobile-experience-strip" aria-label="Choose company">{experiences.map((experience, index) => <button key={`${experience.company}-${experience.period}`} type="button" aria-pressed={chapter === index + 3} disabled={!interactive} onClick={() => onSelectExperience(index)}>{chapters[index + 3].title.replace('Experience · ', '')}</button>)}</nav>}
+      <Leaf chapter={chapter} side="left" skills={skills} experiences={experiences} onSelectExperience={onSelectExperience} interactive={interactive} />
+      <Leaf chapter={chapter} side="right" skills={skills} experiences={experiences} onSelectExperience={onSelectExperience} interactive={interactive} />
+    </>}
+  </div>;
+}
+
 function Book3DView({ onExit, skills, experiences }) {
   const [chapter, setChapter] = useState(-1);
   const [flip, setFlip] = useState(null);
@@ -192,6 +208,7 @@ function Book3DView({ onExit, skills, experiences }) {
   const turnTo = useCallback(async (next, startProgress = 0, cornerY = -1) => {
     if (flipLock.current || next === chapter || next < -1 || next > BACK_COVER) return;
     const direction = next > chapter ? 1 : -1;
+    const scrollTop = desktop ? 0 : spreadRef.current?.querySelector('.book-spread > .book-mobile-page')?.scrollTop ?? 0;
     flipLock.current = true;
     setTurnPending(true);
     if (desktop && bookApiRef.current && next >= 0 && next <= LAST_CHAPTER) {
@@ -200,7 +217,7 @@ function Book3DView({ onExit, skills, experiences }) {
     }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = reduced ? 70 : Math.max(160, Math.round(800 * (1 - startProgress)));
-    setFlip({ from: chapter, to: next, direction, startProgress, duration, cornerY });
+    setFlip({ from: chapter, to: next, direction, startProgress, duration, cornerY, scrollTop });
     timers.current.push(window.setTimeout(() => {
       setChapter(next);
     }, reduced ? 30 : duration - 35));
@@ -270,13 +287,11 @@ function Book3DView({ onExit, skills, experiences }) {
             <div className="turning-face turning-back"><Leaf chapter={flip.to} side={flip.direction === 1 ? 'left' : 'right'} {...leafProps} interactive={false} /></div>
           </div>}
           </>}
-          <div className={`book-mobile-page${chapter >= 3 && chapter <= 7 ? ' is-experience' : ''}`} aria-live="polite">
-            {chapter < 0 || chapter > LAST_CHAPTER ? <BookCover back={chapter > LAST_CHAPTER} /> : <>
-            <div className="mobile-chapter-header"><span>THE BOOK OF THINH · {pageLabel(chapter)}</span><strong>{chapter >= 3 && chapter <= 7 ? 'Professional Experience' : chapters[chapter].title}</strong></div>
-            {chapter >= 3 && chapter <= 7 && <nav className="mobile-experience-strip" aria-label="Choose company">{experiences.map((experience, index) => <button key={`${experience.company}-${experience.period}`} type="button" aria-pressed={chapter === index + 3} disabled={turnPending} onClick={() => turnTo(index + 3)}>{chapters[index + 3].title.replace('Experience · ', '')}</button>)}</nav>}
-            <Leaf chapter={chapter} side="left" {...leafProps} /><Leaf chapter={chapter} side="right" {...leafProps} />
-            </>}
-          </div>
+          <MobilePage chapter={!desktop && flip ? flip.to : chapter} skills={skills} experiences={experiences} onSelectExperience={leafProps.onSelectExperience} interactive={!turnPending} live={!flip} />
+          {!desktop && flip && <div className={`mobile-turn-sheet ${flip.direction === 1 ? 'is-next' : 'is-previous'}`} style={{ '--mobile-turn-duration': `${flip.duration}ms` }} aria-hidden="true" inert>
+            <div className="mobile-turn-face"><MobilePage chapter={flip.from} skills={skills} experiences={experiences} onSelectExperience={leafProps.onSelectExperience} interactive={false} scrollTop={flip.scrollTop} /></div>
+            <div className="mobile-turn-face is-back"><MobilePage chapter={flip.to} skills={skills} experiences={experiences} onSelectExperience={leafProps.onSelectExperience} interactive={false} /></div>
+          </div>}
         </div>
       </div>
       <nav className="book-navigation" aria-label="Book pages">
